@@ -13,6 +13,7 @@
 
 """ipypulldom is a pythonic wrapper around XmlReader, inspired by python's standard pulldom class """
 
+from __future__ import with_statement
 import clr
 clr.AddReference('System.Xml')
 
@@ -48,14 +49,8 @@ class XmlNode(object):
       return self.name
     
     return "{%(namespace)s}%(name)s" % self.__dict__
-    
 
-def load(xml):
-  """generates an iterator over the XmlNodes in the stream of XML represented by the xml argument"""
-  if isinstance(xml, XmlReader):
-    xr = xml
-  else:
-    xr = XmlReader.Create(xml)
+def _process(xr):
   while xr.Read():
     xr.MoveToContent()
     node = XmlNode(xr)
@@ -63,13 +58,21 @@ def load(xml):
     if xr.IsEmptyElement:
       node = XmlNode(xr, endElement=True)
       yield node
-  
+
+def load(xml):
+  """generates an iterator over the XmlNodes in the stream of XML represented by the xml argument"""
+  if isinstance(xml, XmlReader):
+    for n in _process(xml): yield n
+  else:
+    with XmlReader.Create(xml) as xr:
+      for n in _process(xr): yield n
+    
 def parse(xml):
   """generates an iterator over the XmlNodes in the raw XML string provided"""
   from System.IO import StringReader
   return load(StringReader(xml))
 
 if __name__ == "__main__":
-  nodes = parse('Devhawk.rss.xml')      
+  nodes = load('http://feeds2.feedburner.com/Devhawk')      
   for node in nodes:
     print node.xname, node.nodeType

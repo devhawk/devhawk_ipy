@@ -120,10 +120,9 @@ def load(xml):
   
 def parse(xml):
   return xml2py(ipypulldom.parse(xml))
-  
 
 if __name__ == '__main__':  
-  rss = parse('Devhawk.rss.xml')
+  rss = load('http://feeds2.feedburner.com/Devhawk')
   for item in rss.channel.item:
     print item.title
   
